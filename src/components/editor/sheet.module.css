@@ -1,0 +1,206 @@
+/* พื้นแผ่นรองตัดสีเขียว ตารางช่องละ 1 ซม. (--k = px ต่อ mm) */
+.stage {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background-color: var(--mat);
+  background-image: linear-gradient(var(--mat-line-2) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mat-line-2) 1px, transparent 1px),
+    linear-gradient(var(--mat-line) 1px, transparent 1px), linear-gradient(90deg, var(--mat-line) 1px, transparent 1px);
+  background-size:
+    calc(var(--k, 3) * 50px) calc(var(--k, 3) * 50px),
+    calc(var(--k, 3) * 50px) calc(var(--k, 3) * 50px),
+    calc(var(--k, 3) * 10px) calc(var(--k, 3) * 10px),
+    calc(var(--k, 3) * 10px) calc(var(--k, 3) * 10px);
+  background-position: center;
+}
+@media (min-width: 600px) and (min-height: 600px) {
+  .stage {
+    padding: 16px;
+    gap: 10px;
+  }
+}
+.box {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* กระดาษ: touch-action none กันหน้าเลื่อน/ซูมตอนลากกรอบ */
+.sheet {
+  position: relative;
+  flex: 0 0 auto;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.28);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.safe {
+  position: absolute;
+  border: 1px dashed var(--paper-ph-line);
+  pointer-events: none;
+}
+
+/* กรอบ */
+.frame {
+  position: absolute;
+  z-index: 1;
+  cursor: grab;
+}
+.photo .frame {
+  cursor: pointer;
+}
+.photo .frame.hasImage {
+  cursor: move;
+}
+.locked .frame {
+  cursor: default;
+}
+.frame svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  display: block;
+}
+.fill {
+  fill: var(--paper-ph);
+}
+.outline {
+  fill: none;
+  stroke: var(--paper-ph-line);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+.hasImage .outline {
+  stroke: none;
+}
+.selected {
+  z-index: 3;
+}
+.selected .outline {
+  stroke: var(--paper-sel);
+  stroke-width: 2.5;
+  stroke-dasharray: none;
+}
+.photo .selected.hasImage .outline {
+  stroke-dasharray: 6 4;
+}
+.invalid .outline {
+  stroke: var(--paper-bad);
+  stroke-width: 2.5;
+  stroke-dasharray: none;
+}
+.label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--paper-ph-fg);
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.label svg {
+  position: static;
+  width: 18px;
+  height: 18px;
+  color: var(--paper-sel);
+}
+@media (min-width: 600px) and (min-height: 600px) {
+  .label {
+    font-size: 12px;
+  }
+}
+
+/* รูปเต็มแบบจาง ๆ แสดงส่วนที่จะถูกตัดทิ้ง */
+.ghost {
+  position: absolute;
+  z-index: 2;
+  opacity: 0.35;
+  pointer-events: none;
+  outline: 1px solid var(--paper-sel);
+  max-width: none;
+}
+
+/* ตัวอย่างก่อนพิมพ์: ซ่อนช่องว่าง แสดงแค่เส้นตัด */
+.locked .fill {
+  fill: transparent;
+}
+.locked .outline {
+  stroke: none;
+}
+.locked.cut .outline {
+  stroke: var(--paper-cut);
+  stroke-width: 1;
+  stroke-dasharray: none;
+}
+
+.emptyPage {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  text-align: center;
+  color: var(--paper-ph-fg);
+  font-size: var(--fs-s);
+}
+.emptyPage p {
+  margin: 0;
+}
+
+/* ตัวเลื่อนแผ่น */
+.pager {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 2px;
+  gap: 2px;
+}
+.pager button {
+  border-radius: 999px;
+  width: calc(var(--h) - 4px);
+  height: calc(var(--h) - 4px);
+}
+.pagerLabel {
+  font-size: var(--fs-s);
+  padding: 0 6px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.hint {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--mat-fg);
+  text-align: center;
+  min-height: 1.5em;
+  max-width: 100%;
+}
+.hintBad {
+  color: var(--mat-warn);
+}

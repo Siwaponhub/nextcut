@@ -1,0 +1,237 @@
+/*
+ * โทเค็นสีและขนาดของทั้งแอป
+ * - สีทุกตัวมีชุดสว่างและมืด สลับด้วย data-theme บน <html> หรือตามระบบ
+ * - ขนาดปุ่ม/ตัวอักษรใหญ่ขึ้นบน iPad (ดู MQ_BIG ใน src/hooks/useMediaQuery.ts)
+ */
+:root {
+  --bg: #eff1ec;
+  --surface: #ffffff;
+  --surface-2: #f5f7f3;
+  --surface-3: #e6eae3;
+  --line: #d9ded4;
+  --line-strong: #b4bcae;
+  --fg: #1a1f1b;
+  --fg-2: #556055;
+  --fg-3: #848d82;
+  --accent: #0a6c88;
+  --accent-bg: #dceff4;
+  --accent-fg: #064f66;
+  --on-accent: #ffffff;
+  --danger: #b3261e;
+  --danger-bg: #fbe9e7;
+  --warn: #8a5700;
+  --warn-bg: #fff2d4;
+  --ok: #2e7536;
+  --ok-bg: #e5f2e3;
+  --mat: #2d5a45;
+  --mat-line: rgba(255, 255, 255, 0.08);
+  --mat-line-2: rgba(255, 255, 255, 0.19);
+  --mat-fg: rgba(255, 255, 255, 0.86);
+  --mat-warn: #ffd3cc;
+  --scrim: rgba(12, 18, 14, 0.42);
+  --toast-bg: #1a1f1b;
+  --toast-fg: #ffffff;
+  --knob: #ffffff;
+  --shadow: rgba(0, 0, 0, 0.22);
+  /* สีบนกระดาษ: ไม่เปลี่ยนตามธีม เพื่อให้เห็นเหมือนตอนพิมพ์ */
+  --paper-ph: #ecefe8;
+  --paper-ph-line: #97a093;
+  --paper-ph-fg: #556055;
+  --paper-sel: #0a6c88;
+  --paper-bad: #c2382d;
+  --paper-cut: #7a8377;
+
+  /* ขนาด (iPhone) */
+  --h: 44px;
+  --hb: 48px;
+  --hs: 38px;
+  --fs: 15px;
+  --fs-s: 13px;
+  --fs-xs: 12px;
+  --pad: 16px;
+  --act: 64px;
+  --ico: 20px;
+  --panel-h: 310px;
+  --panel-w: 360px;
+  --radius: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1310;
+    --surface: #171c18;
+    --surface-2: #1e2420;
+    --surface-3: #272e29;
+    --line: #2b332d;
+    --line-strong: #46504a;
+    --fg: #e6eae4;
+    --fg-2: #a3ada2;
+    --fg-3: #788276;
+    --accent: #5bc2dd;
+    --accent-bg: #113845;
+    --accent-fg: #a6e2f1;
+    --on-accent: #04222c;
+    --danger: #f28b82;
+    --danger-bg: #3b1714;
+    --warn: #e8b860;
+    --warn-bg: #36290f;
+    --ok: #4fa766;
+    --ok-bg: #16301c;
+    --mat: #1c3528;
+    --mat-line: rgba(255, 255, 255, 0.05);
+    --mat-line-2: rgba(255, 255, 255, 0.12);
+    --mat-fg: rgba(255, 255, 255, 0.8);
+    --mat-warn: #ffb4a9;
+    --scrim: rgba(0, 0, 0, 0.6);
+    --toast-bg: #e6eae4;
+    --toast-fg: #0f1310;
+    --shadow: rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0f1310;
+  --surface: #171c18;
+  --surface-2: #1e2420;
+  --surface-3: #272e29;
+  --line: #2b332d;
+  --line-strong: #46504a;
+  --fg: #e6eae4;
+  --fg-2: #a3ada2;
+  --fg-3: #788276;
+  --accent: #5bc2dd;
+  --accent-bg: #113845;
+  --accent-fg: #a6e2f1;
+  --on-accent: #04222c;
+  --danger: #f28b82;
+  --danger-bg: #3b1714;
+  --warn: #e8b860;
+  --warn-bg: #36290f;
+  --ok: #4fa766;
+  --ok-bg: #16301c;
+  --mat: #1c3528;
+  --mat-line: rgba(255, 255, 255, 0.05);
+  --mat-line-2: rgba(255, 255, 255, 0.12);
+  --mat-fg: rgba(255, 255, 255, 0.8);
+  --mat-warn: #ffb4a9;
+  --scrim: rgba(0, 0, 0, 0.6);
+  --toast-bg: #e6eae4;
+  --toast-fg: #0f1310;
+  --shadow: rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+/* iPad: ปุ่มและตัวอักษรใหญ่ขึ้น */
+@media (min-width: 600px) and (min-height: 600px) {
+  :root {
+    --h: 52px;
+    --hb: 60px;
+    --hs: 48px;
+    --fs: 17px;
+    --fs-s: 15px;
+    --fs-xs: 14px;
+    --pad: 20px;
+    --act: 88px;
+    --ico: 24px;
+    --panel-h: 400px;
+    --panel-w: 400px;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-ui), "Noto Sans Thai", "Thonburi", system-ui, -apple-system, sans-serif;
+  font-size: var(--fs);
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* ช่องกรอกต้องใหญ่อย่างน้อย 16px ไม่งั้น iOS จะซูมหน้าจอเองตอนแตะ */
+input {
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 0 12px;
+  font-size: max(16px, var(--fs));
+}
+
+input::placeholder {
+  color: var(--fg-3);
+}
+
+input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ตอนสั่งพิมพ์: ซ่อนแอป แสดงเฉพาะภาพแผ่นขนาดจริง (ดู PrintSheets.tsx) */
+.print-only {
+  display: none;
+}
+
+@page {
+  size: 100mm 150mm;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    height: auto;
+  }
+  body > *:not(.print-only) {
+    display: none !important;
+  }
+  .print-only {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

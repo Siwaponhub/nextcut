@@ -1,0 +1,8 @@
+/** สร้าง id แบบสุ่มที่ไม่ซ้ำ (ใช้ crypto.randomUUID ถ้ามี) */
+export function createId(prefix = ""): string {
+  const random =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  return prefix + random;
+}

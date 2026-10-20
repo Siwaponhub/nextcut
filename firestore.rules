@@ -1,0 +1,58 @@
+rules_version = '2';
+
+// กฎความปลอดภัยของ Firestore (ไม่มีระบบล็อกอิน ใครเข้าเว็บก็แก้ได้)
+// - ทุกคนอ่าน เพิ่ม แก้ และลบรายการขนาดและเทมเพลตได้
+// - ข้อมูลที่เขียนต้องมีรูปแบบถูกต้องเท่านั้น (กันข้อมูลเสียหรือข้อมูลขยะขนาดใหญ่)
+// - collection อื่นนอกจาก presets และ templates เข้าไม่ได้ทั้งหมด
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function validSize(v) {
+      return v is number && v >= 5 && v <= 150;
+    }
+
+    function validName(d) {
+      return d.name is string && d.name.size() > 0 && d.name.size() <= 40;
+    }
+
+    function validShapeParams(d) {
+      return !('shapeParams' in d) || (
+        d.shapeParams.notchDepth is number && d.shapeParams.notchDepth >= 0 && d.shapeParams.notchDepth <= 0.4
+        && d.shapeParams.tipSharpness is number && d.shapeParams.tipSharpness >= 0 && d.shapeParams.tipSharpness <= 1
+      );
+    }
+
+    function validPreset(d) {
+      return validName(d)
+        && d.shape in ['rect', 'round', 'circle', 'heart']
+        && d.category in ['id', 'instant', 'sticker', 'general']
+        && d.inputUnit in ['cm', 'in']
+        && validSize(d.widthMm) && validSize(d.heightMm)
+        && d.order is int
+        && d.active is bool
+        && validShapeParams(d);
+    }
+
+    function validTemplate(d) {
+      return validName(d)
+        && d.category in ['id', 'gift', 'sticker', 'instant']
+        && d.orientation in ['portrait', 'landscape']
+        && d.background is string && d.background.size() <= 16
+        && d.slots is list && d.slots.size() <= 60
+        && d.order is int
+        && d.active is bool;
+    }
+
+    match /presets/{id} {
+      allow read: if true;
+      allow create, update: if validPreset(request.resource.data);
+      allow delete: if true;
+    }
+
+    match /templates/{id} {
+      allow read: if true;
+      allow create, update: if validTemplate(request.resource.data);
+      allow delete: if true;
+    }
+  }
+}
