@@ -5,7 +5,7 @@ import { shapePath } from "@/lib/shapes";
 
 /** ภาพย่อของเทมเพลต: แผ่นกระดาษพร้อมกรอบทุกช่อง */
 export function TemplateThumb({ template, className }: { template: Template; className?: string }) {
-  const { w, h } = sheetSize(template.orientation);
+  const { w, h } = sheetSize(template);
   return (
     <svg className={className} viewBox={`-1 -1 ${w + 2} ${h + 2}`} aria-hidden="true">
       <rect width={w} height={h} fill={template.background} stroke="var(--line-strong)" strokeWidth={1} />
@@ -53,8 +53,8 @@ export function SheetFitPreview({
   scale?: number;
 }) {
   const settings = { marginMm, gapMm };
-  const grid = gridCapacity(spec.wMm, spec.hMm, "portrait", settings);
-  const rotated = gridCapacity(spec.hMm, spec.wMm, "portrait", settings);
+  const grid = gridCapacity(spec.wMm, spec.hMm, { orientation: "portrait" }, settings);
+  const rotated = gridCapacity(spec.hMm, spec.wMm, { orientation: "portrait" }, settings);
   const ox = (100 - (grid.cols * spec.wMm + (grid.cols - 1) * gapMm)) / 2;
   const oy = (150 - (grid.rows * spec.hMm + (grid.rows - 1) * gapMm)) / 2;
   const cells = [];

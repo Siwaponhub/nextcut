@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import type { Page } from "@/types";
+import { paperOf, paperPreset, papersInUse, samePaper } from "@/lib/constants";
 import { exportJpegFiles, exportPdfFile, shareOrDownload } from "@/lib/export";
 import { useDialog, type ExportFormat } from "@/store/dialogStore";
 import { useEditor } from "@/store/editorStore";
@@ -26,24 +28,52 @@ const TITLE: Record<ExportFormat, string> = {
 /** สร้างไฟล์ตามรูปแบบที่เลือก พร้อมภาพตัวอย่าง */
 async function build(format: ExportFormat, ...args: Parameters<typeof exportJpegFiles>): Promise<Output> {
   const [pages, images, opts] = args;
-  // ตอนพิมพ์หมุนแผ่นแนวนอนให้เป็นแนวตั้ง เพราะกระดาษ 4×6 ป้อนเข้าเครื่องแนวตั้ง
+  // ตอนพิมพ์หมุนแผ่นแนวนอนให้เป็นแนวตั้ง เพราะเครื่องพิมพ์ป้อนกระดาษแนวตั้ง
   const jpgs = await exportJpegFiles(pages, images, { ...opts, rotateToPortrait: format === "print" });
   const previews = jpgs.map((f) => URL.createObjectURL(f));
   if (format === "pdf") return { files: [await exportPdfFile(pages, images, opts)], previews };
   return { files: jpgs, previews };
 }
 
-/** ภาพแผ่นขนาดจริงที่แสดงเฉพาะตอนสั่งพิมพ์ (ใส่ไว้ใต้ body ให้ CSS ตอนพิมพ์ซ่อนส่วนอื่นได้) */
-function PrintSheets({ urls }: { urls: string[] }) {
+/**
+ * ภาพแผ่นขนาดจริงที่แสดงเฉพาะตอนสั่งพิมพ์ (ใส่ไว้ใต้ body ให้ CSS ตอนพิมพ์ซ่อนส่วนอื่นได้)
+ * ตอนพิมพ์ทุกแผ่นถูกหมุนเป็นแนวตั้งแล้ว จึงใช้ขนาดกระดาษแบบแนวตั้ง
+ * ตั้ง @page ตามแผ่นแรก และตั้งชื่อหน้า (named page) ให้แผ่นที่ขนาดต่างออกไป
+ */
+function PrintSheets({ urls, pages }: { urls: string[]; pages: Page[] }) {
+  const sizes = papersInUse(pages);
+  const nameOf = (page: Page) => `paper${sizes.findIndex((p) => samePaper(p, paperOf(page)))}`;
+  const css = [
+    `@page { size: ${sizes[0].wMm}mm ${sizes[0].hMm}mm; margin: 0; }`,
+    ...sizes.map((p, i) => `@page paper${i} { size: ${p.wMm}mm ${p.hMm}mm; margin: 0; }`),
+  ].join("\n");
   return createPortal(
     <div className="print-only">
-      {urls.map((u, i) => (
-        // eslint-disable-next-line @next/next/no-img-element -- ต้องเป็นขนาด mm จริงตอนพิมพ์
-        <img key={u} src={u} alt={`แผ่นที่ ${i + 1}`} style={{ width: "100mm", height: "150mm", display: "block", breakAfter: "page" }} />
-      ))}
+      <style>{css}</style>
+      {urls.map((u, i) => {
+        const p = paperOf(pages[i]);
+        return (
+          // eslint-disable-next-line @next/next/no-img-element -- ต้องเป็นขนาด mm จริงตอนพิมพ์
+          <img
+            key={u}
+            src={u}
+            alt={`แผ่นที่ ${i + 1}`}
+            style={{ width: `${p.wMm}mm`, height: `${p.hMm}mm`, display: "block", breakAfter: "page", page: nameOf(pages[i]) }}
+          />
+        );
+      })}
     </div>,
     document.body,
   );
+}
+
+/** คำแนะนำเลือกกระดาษในหน้าพิมพ์ */
+function printNote(pages: Page[]): string {
+  const sizes = papersInUse(pages);
+  if (sizes.length > 1) return `งานนี้ใช้กระดาษ ${sizes.length} ขนาด ควรพิมพ์แยกทีละขนาด ตั้งขนาด 100% และปิดการย่อให้พอดีหน้า`;
+  const preset = paperPreset(sizes[0]);
+  const name = preset ? `${preset.label} (${preset.note.split(" · ")[0]})` : `${sizes[0].wMm}×${sizes[0].hMm} mm`;
+  return `ในหน้าพิมพ์ เลือกกระดาษ ${name} ตั้งขนาด 100% และปิดการย่อให้พอดีหน้า`;
 }
 
 /**
@@ -103,11 +133,11 @@ export function ExportDialog({ format }: { format: ExportFormat }) {
           </div>
           {format === "print" ? (
             <>
-              <Note>ในหน้าพิมพ์ เลือกกระดาษ 10×15 ซม. หรือ 4×6 นิ้ว ตั้งขนาด 100% และปิดการย่อให้พอดีหน้า</Note>
+              <Note>{printNote(pages)}</Note>
               <Button variant="primary" wide icon="printer" onClick={() => window.print()}>
                 พิมพ์
               </Button>
-              <PrintSheets urls={output.previews} />
+              <PrintSheets urls={output.previews} pages={pages} />
             </>
           ) : (
             <Button variant="primary" wide icon="share" onClick={share}>

@@ -73,7 +73,7 @@ export function TopBar() {
   const canUndo = useEditor((st) => st.history.length > 0);
   const undo = useEditor((st) => st.undo);
   const { dark, setTheme } = useTheme();
-  const size = sheetSize(page.orientation);
+  const size = sheetSize(page);
 
   return (
     <header className={s.top}>

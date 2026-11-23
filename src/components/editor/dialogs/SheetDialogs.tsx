@@ -1,8 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import type { Orientation, TemplateCategory, ThemeChoice } from "@/types";
-import { BACKGROUNDS, TEMPLATE_CATEGORY_LABEL } from "@/lib/constants";
+import type { Orientation, PaperSize, TemplateCategory, ThemeChoice } from "@/types";
+import {
+  BACKGROUNDS,
+  PAPER_MAX_MM,
+  PAPER_MIN_MM,
+  PAPER_PRESETS,
+  TEMPLATE_CATEGORY_LABEL,
+  paperOf,
+  paperPreset,
+  sheetFromSize,
+  sheetSize,
+} from "@/lib/constants";
+import { formatSize } from "@/lib/units";
 import { createId } from "@/lib/id";
 import { useTheme } from "@/hooks/useTheme";
 import { useCatalog } from "@/store/catalogStore";
@@ -18,7 +29,82 @@ import { NumberField } from "../../ui/NumberField";
 import { Chip, Segmented } from "../../ui/Segmented";
 import s from "../editor.module.css";
 
-/** ตั้งค่าแผ่น: แนวกระดาษ สีพื้นหลัง หน่วย ขอบ ระยะห่าง เส้นตัด ธีม และเครื่องมือของแผ่น */
+/** เลือกขนาดกระดาษของแผ่นปัจจุบัน: ขนาดสำเร็จรูป หรือกำหนดกว้าง×สูงเอง */
+function PaperPicker() {
+  const page = useEditor(selectCurrentPage);
+  const setPaper = useEditor((st) => st.setPaper);
+  const unit = usePrefs((p) => p.unit);
+  const preset = paperPreset(paperOf(page));
+  const [custom, setCustom] = useState(!preset);
+  const { w, h } = sheetSize(page);
+
+  /** เปลี่ยนขนาด แล้วเตือนถ้ามีกรอบล้นขอบ */
+  const apply = (paper: PaperSize, orientation?: Orientation) => {
+    setPaper(paper, orientation);
+    const next = selectCurrentPage(useEditor.getState());
+    const size = sheetSize(next);
+    const over = next.frames.filter((f) => f.xMm + f.wMm > size.w + 1e-6 || f.yMm + f.hMm > size.h + 1e-6).length;
+    if (over) toast(`${over} กรอบล้นขอบ · กด "จัดเรียงอัตโนมัติ" เพื่อจัดใหม่`);
+  };
+
+  /** แก้ความกว้างหรือสูงที่เห็น (ถ้ากว้างเกินสูง จะกลายเป็นแนวนอน) */
+  const applySize = (nw: number, nh: number) => {
+    const sheet = sheetFromSize(nw, nh);
+    apply(sheet.paper, sheet.orientation);
+  };
+
+  return (
+    <>
+      <p className={s.sectionLabel}>ขนาดกระดาษ</p>
+      <div className={s.wrapRow}>
+        {PAPER_PRESETS.map((p) => (
+          <Chip
+            key={p.id}
+            className={s.presetChip}
+            selected={!custom && preset?.id === p.id}
+            onClick={() => {
+              setCustom(false);
+              apply(p.paper);
+            }}
+          >
+            <span className={s.chipText}>
+              <span>{p.label}</span>
+              <small>{p.note}</small>
+            </span>
+          </Chip>
+        ))}
+        <Chip className={s.presetChip} selected={custom} onClick={() => setCustom(true)}>
+          <span className={s.chipText}>
+            <span>กำหนดเอง</span>
+            <small>{custom ? formatSize(w, h, unit) : "ใส่กว้าง × สูง"}</small>
+          </span>
+        </Chip>
+      </div>
+      {custom && (
+        <div className={s.fields}>
+          <NumberField
+            label="กว้าง"
+            unit={unit}
+            valueMm={w}
+            minMm={PAPER_MIN_MM}
+            maxMm={PAPER_MAX_MM}
+            onChange={(nw) => applySize(nw, h)}
+          />
+          <NumberField
+            label="สูง"
+            unit={unit}
+            valueMm={h}
+            minMm={PAPER_MIN_MM}
+            maxMm={PAPER_MAX_MM}
+            onChange={(nh) => applySize(w, nh)}
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
+/** ตั้งค่าแผ่น: ขนาดและแนวกระดาษ สีพื้นหลัง หน่วย ขอบ ระยะห่าง เส้นตัด ธีม และเครื่องมือของแผ่น */
 export function SheetSettingsDialog() {
   const close = useDialog((d) => d.close);
   const open = useDialog((d) => d.open);
@@ -31,6 +117,7 @@ export function SheetSettingsDialog() {
 
   return (
     <Dialog title={`ตั้งค่าแผ่นที่ ${pageIndex + 1}`} subtitle="มีผลกับการวางกรอบและการพิมพ์" onClose={close}>
+      <PaperPicker />
       <p className={s.sectionLabel}>แนวกระดาษ</p>
       <Segmented<Orientation>
         label="แนวกระดาษ"
@@ -174,6 +261,7 @@ export function SaveTemplateDialog() {
         name: trimmed,
         category,
         orientation: page.orientation,
+        ...(page.paper ? { paper: page.paper } : {}),
         background: page.background,
         slots: page.frames.map((f) => ({ shape: f.shape, wMm: f.wMm, hMm: f.hMm, heart: f.heart, xMm: f.xMm, yMm: f.yMm })),
         order: templates.length + 1,

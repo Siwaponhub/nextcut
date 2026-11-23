@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Frame, Page, Preset } from "@/types";
+import { sheetFromSize, sheetSize } from "./constants";
 import { imageGeometry, isFrameInvalid, rectsOverlap } from "./geometry";
 import {
   arrangePage,
@@ -28,7 +29,7 @@ function allValid(page: Page) {
 
 describe("layout", () => {
   it("รูป 1 นิ้ว วางได้ 12 ช่องต่อแผ่นแนวตั้ง", () => {
-    expect(gridCapacity(25, 30, "portrait", settings)).toEqual({ cols: 3, rows: 4, count: 12 });
+    expect(gridCapacity(25, 30, { orientation: "portrait" }, settings)).toEqual({ cols: 3, rows: 4, count: 12 });
   });
 
   it("หาที่ว่างโดยเว้นขอบและระยะห่าง", () => {
@@ -121,5 +122,54 @@ describe("geometry", () => {
     const g = imageGeometry(frame({ fit: "contain" }), { width: 1200, height: 800 });
     expect(g.w).toBeCloseTo(25);
     expect(g.overflowY).toBeLessThan(0);
+  });
+});
+
+describe("ขนาดกระดาษ", () => {
+  const a4 = { wMm: 210, hMm: 297 };
+
+  it("แผ่นที่ไม่มี paper ใช้ 10×15 ซม. และแนวนอนสลับด้าน", () => {
+    expect(sheetSize({ orientation: "portrait" })).toEqual({ w: 100, h: 150 });
+    expect(sheetSize({ orientation: "landscape", paper: a4 })).toEqual({ w: 297, h: 210 });
+  });
+
+  it("กระดาษ A4 วางรูป 1 นิ้วได้มากกว่า 10×15", () => {
+    // (210 - 6 + 2) / 27 = 7 คอลัมน์, (297 - 6 + 2) / 32 = 9 แถว
+    expect(gridCapacity(25, 30, { orientation: "portrait", paper: a4 }, settings)).toEqual({ cols: 7, rows: 9, count: 63 });
+  });
+
+  it("แปลงกว้าง×สูงที่กรอกเป็นกระดาษแนวตั้ง + แนววาง", () => {
+    expect(sheetFromSize(200, 100)).toEqual({ orientation: "landscape", paper: { wMm: 100, hMm: 200 } });
+    expect(sheetFromSize(100, 100)).toEqual({ orientation: "portrait", paper: { wMm: 100, hMm: 100 } });
+  });
+
+  it("แผ่นที่เพิ่มอัตโนมัติใช้ขนาดกระดาษเดียวกับแผ่นต้นทาง", () => {
+    const small = { wMm: 89, hMm: 127 };
+    const r = generateFrames({
+      pages: [createPage("portrait", "#FFFFFF", small)],
+      pageIndex: 0,
+      items: expandBasket([{ presetId: "p-1in", qty: 30 }], presets),
+      mode: "append",
+      settings,
+    });
+    expect(r.addedPages).toBeGreaterThan(0);
+    expect(r.pages.every((p) => p.paper === small)).toBe(true);
+    expect(r.pages.every(allValid)).toBe(true);
+  });
+
+  it("เทมเพลตที่มีขนาดกระดาษ สร้างแผ่นขนาดนั้น", () => {
+    const page = pageFromTemplate({
+      id: "t",
+      name: "A4",
+      category: "gift",
+      orientation: "landscape",
+      paper: a4,
+      background: "#FFFFFF",
+      order: 1,
+      active: true,
+      slots: [{ ...oneInch, xMm: 260, yMm: 3 }],
+    });
+    expect(sheetSize(page)).toEqual({ w: 297, h: 210 });
+    expect(allValid(page)).toBe(true);
   });
 });

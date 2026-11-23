@@ -22,7 +22,7 @@ export function rectsOverlap(a: Rect, b: Rect, gap = 0): boolean {
 
 /** กรอบล้นขอบกระดาษหรือทับกรอบอื่นหรือไม่ (ใช้แสดงกรอบสีแดง) */
 export function isFrameInvalid(frame: Frame, page: Page): boolean {
-  const { w, h } = sheetSize(page.orientation);
+  const { w, h } = sheetSize(page);
   const outside =
     frame.xMm < -EPS || frame.yMm < -EPS || frame.xMm + frame.wMm > w + EPS || frame.yMm + frame.hMm > h + EPS;
   return outside || page.frames.some((o) => o.id !== frame.id && rectsOverlap(frame, o));

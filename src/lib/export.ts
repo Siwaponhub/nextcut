@@ -1,12 +1,12 @@
 import type { ImageInfo, Page } from "@/types";
-import { CUT_LINE_COLOR, CUT_LINE_MM, PRINT_DPI, sheetSize } from "./constants";
+import { CUT_LINE_COLOR, CUT_LINE_MM, PRINT_DPI, paperOf, sheetSize } from "./constants";
 import { dpiLevel, effectiveDpi, imageGeometry, isFrameInvalid } from "./geometry";
 import { loadImageElement } from "./images";
 import { shapePath } from "./shapes";
 
 export interface RenderOptions {
   cutLines: boolean;
-  /** หมุนแผ่นแนวนอนให้เป็นแนวตั้ง (ใช้ตอนสั่งพิมพ์บนกระดาษ 4×6 ที่ป้อนแนวตั้ง) */
+  /** หมุนแผ่นแนวนอนให้เป็นแนวตั้ง (ใช้ตอนสั่งพิมพ์ เพราะเครื่องพิมพ์ป้อนกระดาษแนวตั้ง) */
   rotateToPortrait?: boolean;
 }
 
@@ -39,7 +39,7 @@ export async function renderPage(
   images: Record<string, ImageInfo>,
   opts: RenderOptions,
 ): Promise<HTMLCanvasElement> {
-  const { w, h } = sheetSize(page.orientation);
+  const { w, h } = sheetSize(page);
   const pxPerMm = PRINT_DPI / 25.4;
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(w * pxPerMm);
@@ -129,10 +129,11 @@ export async function exportPdfFile(
   const { jsPDF } = await import("jspdf");
   let doc: InstanceType<typeof jsPDF> | null = null;
   for (const page of pages) {
-    const { w, h } = sheetSize(page.orientation);
+    const { w, h } = sheetSize(page);
+    const p = paperOf(page);
     const orientation = page.orientation === "portrait" ? "portrait" : "landscape";
-    if (!doc) doc = new jsPDF({ unit: "mm", format: [100, 150], orientation });
-    else doc.addPage([100, 150], orientation);
+    if (!doc) doc = new jsPDF({ unit: "mm", format: [p.wMm, p.hMm], orientation });
+    else doc.addPage([p.wMm, p.hMm], orientation);
     const canvas = await renderPage(page, images, opts);
     doc.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, w, h);
   }

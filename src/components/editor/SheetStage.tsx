@@ -52,7 +52,7 @@ function useHint(): { text: string; bad: boolean } {
   const big = useMediaQuery(MQ_BIG);
 
   if (step === "export") {
-    const { w, h } = sheetSize(page.orientation);
+    const { w, h } = sheetSize(page);
     return { text: `ตัวอย่างก่อนพิมพ์ · ขนาดจริง ${formatSize(w, h, unit)}`, bad: false };
   }
   const invalid = page.frames.filter((f) => isFrameInvalid(f, page)).length;
@@ -77,7 +77,7 @@ export function SheetStage() {
   const [boxRef, box] = useElementSize<HTMLDivElement>();
   const hint = useHint();
 
-  const { w, h } = sheetSize(page.orientation);
+  const { w, h } = sheetSize(page);
   const scale = Math.max(0.8, Math.min((box.width - 8) / w, (box.height - 8) / h));
   const goToLayout = useCallback(() => setStep("layout"), [setStep]);
 

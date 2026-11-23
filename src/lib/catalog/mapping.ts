@@ -31,6 +31,9 @@ export interface TemplateDoc {
   name: string;
   category: Template["category"];
   orientation: Template["orientation"];
+  /** ขนาดกระดาษแบบแนวตั้ง (ไม่มี = 10×15 ซม.) */
+  paperWidthMm?: number;
+  paperHeightMm?: number;
   background: string;
   slots: TemplateSlotDoc[];
   order: number;
@@ -98,6 +101,7 @@ export function templateToDoc(t: Template): TemplateDoc {
     name: t.name,
     category: t.category,
     orientation: t.orientation,
+    ...(t.paper ? { paperWidthMm: t.paper.wMm, paperHeightMm: t.paper.hMm } : {}),
     background: t.background,
     slots: t.slots.map(slotToDoc),
     order: t.order,
@@ -112,6 +116,7 @@ export function docToTemplate(id: string, d: Partial<TemplateDoc>): Template {
     name: d.name ?? "ไม่มีชื่อ",
     category: d.category ?? "gift",
     orientation: d.orientation ?? "portrait",
+    ...(d.paperWidthMm && d.paperHeightMm ? { paper: { wMm: d.paperWidthMm, hMm: d.paperHeightMm } } : {}),
     background: d.background ?? "#FFFFFF",
     slots: (d.slots ?? []).map(docToSlot),
     order: d.order ?? 999,

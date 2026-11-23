@@ -9,8 +9,20 @@ export type Unit = "cm" | "in";
 /** รูปทรงของกรอบ */
 export type Shape = "rect" | "round" | "circle" | "heart";
 
-/** แนวกระดาษ: portrait = 100×150 mm, landscape = 150×100 mm */
+/** แนวกระดาษ: portrait = ด้านสั้นเป็นความกว้าง, landscape = ด้านยาวเป็นความกว้าง */
 export type Orientation = "portrait" | "landscape";
+
+/** ขนาดกระดาษ (mm) เก็บแบบแนวตั้งเสมอ: wMm = ด้านสั้น, hMm = ด้านยาว */
+export interface PaperSize {
+  wMm: number;
+  hMm: number;
+}
+
+/** สิ่งที่บอกขนาดแผ่นได้ (แผ่นงานหรือเทมเพลต) ไม่มี paper = 10×15 ซม. ตามงานรุ่นเก่า */
+export interface SheetLike {
+  orientation: Orientation;
+  paper?: PaperSize;
+}
 
 /** cover = รูปเต็มกรอบ (ตัดส่วนเกิน), contain = เห็นทั้งรูป (อาจมีขอบว่าง) */
 export type ImageFit = "cover" | "contain";
@@ -62,6 +74,8 @@ export interface Template {
   name: string;
   category: TemplateCategory;
   orientation: Orientation;
+  /** ขนาดกระดาษของเทมเพลต (ไม่มี = 10×15 ซม.) */
+  paper?: PaperSize;
   background: string;
   slots: TemplateSlot[];
   order: number;
@@ -86,6 +100,8 @@ export interface Frame extends FrameSpec {
 export interface Page {
   id: string;
   orientation: Orientation;
+  /** ขนาดกระดาษ (ไม่มี = 10×15 ซม.) */
+  paper?: PaperSize;
   background: string;
   frames: Frame[];
 }

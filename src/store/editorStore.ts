@@ -1,9 +1,10 @@
 import { create } from "zustand";
-import type { Frame, ImageInfo, LayoutSettings, Orientation, Page, Preset, Step, Template } from "@/types";
+import type { Frame, ImageInfo, LayoutSettings, Orientation, Page, PaperSize, Preset, Step, Template } from "@/types";
 import { HISTORY_LIMIT } from "@/lib/constants";
 import {
   arrangePage,
   createPage,
+  createPageLike,
   duplicateFrame,
   expandBasket,
   generateFrames,
@@ -50,6 +51,7 @@ interface EditorState {
   addPage: () => void;
   deletePage: () => void;
   setOrientation: (o: Orientation) => void;
+  setPaper: (paper: PaperSize, orientation?: Orientation) => void;
   setBackground: (color: string) => void;
   updateFrame: (id: string, patch: Partial<Frame>, recordHistory?: boolean) => void;
   deleteFrame: (id: string) => void;
@@ -156,7 +158,7 @@ export const useEditor = create<EditorState>()((set, get) => {
       record();
       set((s) => {
         const pages = s.pages.slice();
-        pages.splice(s.pageIndex + 1, 0, createPage(s.pages[s.pageIndex].orientation));
+        pages.splice(s.pageIndex + 1, 0, createPageLike(s.pages[s.pageIndex]));
         return { pages, pageIndex: s.pageIndex + 1, selectedId: null };
       });
     },
@@ -177,6 +179,12 @@ export const useEditor = create<EditorState>()((set, get) => {
       record();
       editPage((p) => ({ ...p, orientation }));
       set({ selectedId: null });
+    },
+
+    /** เปลี่ยนขนาดกระดาษ (และแนว ถ้าส่งมา) ของแผ่นปัจจุบัน กรอบอยู่ที่เดิม */
+    setPaper: (paper, orientation) => {
+      record();
+      editPage((p) => ({ ...p, paper, orientation: orientation ?? p.orientation }));
     },
 
     /** เปลี่ยนสีพื้นหลังของแผ่นปัจจุบัน */

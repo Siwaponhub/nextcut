@@ -98,7 +98,7 @@ export function SheetCanvas(props: SheetCanvasProps) {
   }, [scale]);
   useSheetGestures(sheetRef, scaleRef, onPickPhoto, onDropFiles);
 
-  const { w, h } = sheetSize(page.orientation);
+  const { w, h } = sheetSize(page);
   const locked = step === "export";
   const selected = page.frames.find((f) => f.id === selectedId);
   const ghostImage = step === "photo" && selected?.imageId ? images[selected.imageId] : undefined;

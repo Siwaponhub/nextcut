@@ -164,7 +164,7 @@ export function useSheetGestures(
       if (!frame) return;
 
       if (d.kind === "move") {
-        const sheetMm = sheetSize(selectCurrentPage(s).orientation);
+        const sheetMm = sheetSize(selectCurrentPage(s));
         s.updateFrame(
           d.frameId,
           {

@@ -1,5 +1,6 @@
 "use client";
 
+import { PRINT_DPI, paperPreset, papersInUse, sheetSize } from "@/lib/constants";
 import { preflight } from "@/lib/export";
 import { formatSize } from "@/lib/units";
 import { useDialog } from "@/store/dialogStore";
@@ -30,6 +31,17 @@ export function ExportPanel() {
   const { unit, cutLines, setCutLines } = usePrefs();
   const open = useDialog((d) => d.open);
   const r = preflight(pages, images);
+  const papers = papersInUse(pages);
+  const mixed = papers.length > 1;
+  const first = sheetSize(pages[0]);
+  const px = (mm: number) => Math.round((mm * PRINT_DPI) / 25.4);
+  const sizeText = mixed ? `กระดาษ ${papers.length} ขนาด` : formatSize(first.w, first.h, unit);
+  const preset = mixed ? null : paperPreset(papers[0]);
+  const paperName = mixed
+    ? "ขนาดตามแต่ละแผ่น"
+    : preset
+      ? `${preset.label} (${preset.note.split(" · ")[0]})`
+      : formatSize(papers[0].wMm, papers[0].hMm, unit);
 
   return (
     <>
@@ -37,7 +49,7 @@ export function ExportPanel() {
         <div className={s.headText}>
           <strong>ตรวจก่อนส่งออก</strong>
           <small>
-            {pages.length} แผ่น · {r.totalFrames} กรอบ · {formatSize(100, 150, unit)}
+            {pages.length} แผ่น · {r.totalFrames} กรอบ · {sizeText}
           </small>
         </div>
       </div>
@@ -69,19 +81,19 @@ export function ExportPanel() {
       <Option
         icon="photo"
         title="รูป JPG 300 dpi"
-        detail="1181×1772 px ต่อแผ่น · บันทึกลง Photos หรือส่งแอปเครื่องพิมพ์"
+        detail={`${mixed ? "ขนาดตามแต่ละแผ่น" : `${px(first.w)}×${px(first.h)} px ต่อแผ่น`} · บันทึกลง Photos หรือส่งแอปเครื่องพิมพ์`}
         onClick={() => open({ kind: "export", format: "jpg" })}
       />
       <Option
         icon="file"
         title="PDF ขนาดจริง"
-        detail={`${pages.length} หน้า · หน้าละ 100×150 mm · เก็บใน Files`}
+        detail={`${pages.length} หน้า · ${mixed ? "ขนาดตามแต่ละแผ่น" : `หน้าละ ${Math.round(first.w * 10) / 10}×${Math.round(first.h * 10) / 10} mm`} · เก็บใน Files`}
         onClick={() => open({ kind: "export", format: "pdf" })}
       />
       <Option
         icon="printer"
         title="พิมพ์ (AirPrint)"
-        detail="เลือกกระดาษ 10×15 ซม. หรือ 4×6 นิ้ว และขนาด 100%"
+        detail={`เลือกกระดาษ ${paperName} และขนาด 100%`}
         onClick={() => open({ kind: "export", format: "print" })}
       />
     </>

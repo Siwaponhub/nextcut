@@ -92,7 +92,7 @@ function BuildSet() {
   const { basket, generateMode, pages, pageIndex } = useEditor();
   const { addToBasket, setBasketQty, removeFromBasket, setGenerateMode, generate } = useEditor();
   const { unit, marginMm, gapMm } = usePrefs();
-  const orientation = pages[pageIndex].orientation;
+  const current = pages[pageIndex];
   const active = presets.filter((p) => p.active);
 
   // คำนวณผลลัพธ์ล่วงหน้า (ไม่แก้ข้อมูลจริง) เพื่อบอกว่าจะใช้กี่แผ่น
@@ -148,7 +148,7 @@ function BuildSet() {
             {basket.map((b, i) => {
               const p = presets.find((x) => x.id === b.presetId);
               if (!p) return null;
-              const perSheet = gridCapacity(p.wMm, p.hMm, orientation, { marginMm, gapMm }).count;
+              const perSheet = gridCapacity(p.wMm, p.hMm, current, { marginMm, gapMm }).count;
               return (
                 <div key={b.presetId} className={s.basketRow}>
                   <ShapeIcon shape={p.shape} size={26} />
@@ -197,7 +197,7 @@ export function LayoutPanel() {
   const setTab = useEditor((st) => st.setLayoutTab);
   const unit = usePrefs((p) => p.unit);
   const openDialog = useDialog((d) => d.open);
-  const { w, h } = sheetSize(page.orientation);
+  const { w, h } = sheetSize(page);
 
   return (
     <>

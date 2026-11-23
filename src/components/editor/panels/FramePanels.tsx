@@ -100,7 +100,7 @@ export function SizeShapePanel({ frame }: { frame: Frame }) {
   const { unit, setUnit } = usePrefs();
   const page = useEditor(selectCurrentPage);
   const editor = useEditor();
-  const sheet = sheetSize(page.orientation);
+  const sheet = sheetSize(page);
   const adjusting = useRef(false);
 
   /** แก้ค่ากรอบหนึ่งครั้ง (บันทึกจุดย้อนกลับด้วย) */

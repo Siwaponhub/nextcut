@@ -1,4 +1,4 @@
-import type { Frame, FrameSpec, LayoutSettings, Orientation, Page, Preset, Template } from "@/types";
+import type { Frame, FrameSpec, LayoutSettings, Orientation, Page, PaperSize, Preset, SheetLike, Template } from "@/types";
 import { sheetSize } from "./constants";
 import { rectsOverlap } from "./geometry";
 import { createId } from "./id";
@@ -41,8 +41,13 @@ function r2(x: number): number {
 }
 
 /** สร้างแผ่นว่าง */
-export function createPage(orientation: Orientation = "portrait", background = "#FFFFFF"): Page {
-  return { id: createId("pg_"), orientation, background, frames: [] };
+export function createPage(orientation: Orientation = "portrait", background = "#FFFFFF", paper?: PaperSize): Page {
+  return { id: createId("pg_"), orientation, ...(paper ? { paper } : {}), background, frames: [] };
+}
+
+/** แผ่นว่างใหม่ที่ขนาดและแนวเดียวกับแผ่นต้นแบบ */
+export function createPageLike(like: Page, keepBackground = false): Page {
+  return createPage(like.orientation, keepBackground ? like.background : "#FFFFFF", like.paper);
 }
 
 /** สร้างกรอบใหม่ที่ตำแหน่ง x,y (ถ้ามีกรอบต้นทาง คัดลอกรูปและการครอปมาด้วย) */
@@ -65,8 +70,8 @@ export function createFrame(spec: PlaceItem, xMm: number, yMm: number): Frame {
 }
 
 /** จำนวนกรอบขนาด w×h ที่เรียงเป็นตารางได้บนแผ่นเดียว */
-export function gridCapacity(w: number, h: number, orientation: Orientation, s: LayoutSettings) {
-  const sheet = sheetSize(orientation);
+export function gridCapacity(w: number, h: number, sheetLike: SheetLike, s: LayoutSettings) {
+  const sheet = sheetSize(sheetLike);
   const cols = Math.max(0, Math.floor((sheet.w - 2 * s.marginMm + s.gapMm) / (w + s.gapMm)));
   const rows = Math.max(0, Math.floor((sheet.h - 2 * s.marginMm + s.gapMm) / (h + s.gapMm)));
   return { cols, rows, count: cols * rows };
@@ -77,7 +82,7 @@ export function gridCapacity(w: number, h: number, orientation: Orientation, s: 
  * ตำแหน่งที่ลองคือขอบกระดาษ และขอบของกรอบที่มีอยู่ + ระยะห่าง
  */
 export function findFreeSpot(page: Page, w: number, h: number, s: LayoutSettings): { x: number; y: number } | null {
-  const sheet = sheetSize(page.orientation);
+  const sheet = sheetSize(page);
   const xs = [s.marginMm];
   const ys = [s.marginMm];
   for (const f of page.frames) {
@@ -112,9 +117,9 @@ export function placeOnPage(page: Page, items: PlaceItem[], s: LayoutSettings): 
 
   if (!frames.length && sameSpec) {
     const first = items[0];
-    const grid = gridCapacity(first.wMm, first.hMm, page.orientation, s);
+    const grid = gridCapacity(first.wMm, first.hMm, page, s);
     if (!grid.count) return { page, rest: items };
-    const sheet = sheetSize(page.orientation);
+    const sheet = sheetSize(page);
     const n = Math.min(grid.count, items.length);
     const cols = Math.min(grid.cols, n);
     const rows = Math.ceil(n / cols);
@@ -163,14 +168,14 @@ export function generateFrames(args: {
 }): GenerateResult {
   const { items, mode, settings } = args;
   const pages = args.pages.slice();
-  const orientation = pages[args.pageIndex].orientation;
+  const base = pages[args.pageIndex];
   const used = new Set<number>();
   let index = args.pageIndex;
   let added = 0;
   if (!items.length) return { pages, firstIndex: index, placed: 0, failed: 0, usedPages: 0, addedPages: 0 };
 
   if (mode === "new") {
-    pages.push(createPage(orientation));
+    pages.push(createPageLike(base));
     index = pages.length - 1;
     added++;
   }
@@ -186,7 +191,7 @@ export function generateFrames(args: {
   }
 
   while (rest.length && added < MAX_NEW_PAGES) {
-    const next = placeOnPage(createPage(orientation), rest, settings);
+    const next = placeOnPage(createPageLike(base), rest, settings);
     if (next.rest.length === rest.length) break; // กรอบใหญ่เกินแผ่น วางไม่ได้แน่นอน
     pages.push(next.page);
     added++;
@@ -215,7 +220,7 @@ export function arrangePage(pages: Page[], pageIndex: number, s: LayoutSettings)
   let rest = first.rest;
   let added = 0;
   while (rest.length && added < 10) {
-    const next = placeOnPage(createPage(page.orientation, page.background), rest, s);
+    const next = placeOnPage(createPageLike(page, true), rest, s);
     if (next.rest.length === rest.length) break;
     out.splice(pageIndex + 1 + added, 0, next.page);
     added++;
@@ -234,6 +239,6 @@ export function duplicateFrame(page: Page, frame: Frame, s: LayoutSettings): { p
 
 /** สร้างแผ่นใหม่จากเทมเพลต (มีแต่กรอบ ยังไม่มีรูป) */
 export function pageFromTemplate(t: Template): Page {
-  const page = createPage(t.orientation, t.background);
+  const page = createPage(t.orientation, t.background, t.paper);
   return { ...page, frames: t.slots.map((s) => createFrame(s, s.xMm, s.yMm)) };
 }
